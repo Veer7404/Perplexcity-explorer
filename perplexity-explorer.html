@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PERPLEXITY EXPLORER // GTA AI INTELLIGENCE LAB</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,700&family=Cinzel:wght@700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Bebas+Neue&family=Montserrat:wght@900&family=Pricedown&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'Pricedown';
+      src: local('Pricedown'), local('Pricedown Black'), local('Impact');
+    }
+
+    :root {
+      --bg-canvas: #060709;
+      --bg-darker: #020304;
+      --bg-panel: #0d0f13;
+      --bg-panel-elevated: #13161d;
+      --bg-panel-subtle: #191d26;
+      --border-hard: #232732;
+      --border-accent: #f8ab1d;
+      --border-accent-subtle: rgba(248, 171, 29, 0.28);
+      
+      --r-yellow: #f8ab1d;
+      --r-yellow-bright: #ffbe3b;
+      --r-yellow-glow: rgba(248, 171, 29, 0.5);
+      --r-yellow-faint: rgba(248, 171, 29, 0.08);
+
+      --sa-money-green: #3ab03e;
+      --sa-money-glow: rgba(58, 176, 62, 0.4);
+      --gta5-special-yellow: #f5c400;
+
+      --r-red: #ff3344;
+      --r-red-glow: rgba(255, 51, 68, 0.4);
+
+      --text-warm-white: #f5f4ef;
+      --text-muted: #9ba3b4;
+      --text-dim: #606877;
+      --text-dark: #0a0b0d;
+
+      --font-gta: 'Pricedown', 'Bebas Neue', 'Montserrat', Impact, sans-serif;
+      --font-display: 'Chakra Petch', 'Cinzel', Impact, -apple-system, sans-serif;
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg-canvas);
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(248, 171, 29, 0.1) 0%, transparent 60%),
+        radial-gradient(circle at 100% 100%, rgba(255, 60, 40, 0.04) 0%, transparent 50%),
+        linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+      color: var(--text-warm-white);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      line-height: 1.5;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Ambient Smoke & Fog Canvas (Silent, 60fps) */
+    #fogCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.55;
+    }
+
+    /* CRT Scanlines & Vignette */
+    .crt-scanlines {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.22) 50%);
+      background-size: 100% 4px;
+      z-index: 9990;
+      pointer-events: none;
+      opacity: 0.6;
+    }
+    .cinematic-vignette {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: radial-gradient(circle at 50% 50%, transparent 60%, rgba(0, 0, 0, 0.85) 100%);
+      z-index: 9989;
+      pointer-events: none;
+    }
+
+    /* Entry Fog Curtain Overlay */
+    .entry-fog-curtain {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: radial-gradient(circle at 50% 30%, rgba(18, 22, 29, 0.96) 0%, rgba(4, 5, 7, 0.98) 100%);
+      z-index: 9995;
+      pointer-events: none;
+      animation: fogCurtainDissipate 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes fogCurtainDissipate {
+      0% { opacity: 1; filter: blur(20px); transform: scale(1); }
+      60% { opacity: 0.7; filter: blur(35px); transform: scale(1.05); }
+      100% { opacity: 0; filter: blur(50px); transform: scale(1.1); visibility: hidden; }
+    }
+
+    /* GTA San Andreas Respect + / Mission Passed Splash (Silent) */
+    .gta-mission-splash {
+      position: fixed;
+      top: 24%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.85);
+      z-index: 10000;
+      text-align: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .gta-mission-splash.active {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    .gta-splash-bar {
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--r-yellow), transparent);
+      margin: 8px 0;
+      box-shadow: 0 0 16px var(--r-yellow);
+    }
+    .gta-splash-title {
+      font-family: var(--font-gta);
+      font-size: 68px;
+      letter-spacing: 6px;
+      color: var(--r-yellow);
+      text-transform: uppercase;
+      text-shadow: 0 0 30px var(--r-yellow-glow), 4px 4px 0 #000;
+      line-height: 1;
+    }
+    .gta-splash-sub {
+      font-family: var(--font-display);
+      font-size: 15px;
+      letter-spacing: 4px;
+      color: #fff;
+      text-transform: uppercase;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+      margin-top: 6px;
+    }
+    .gta-respect-badge {
+      display: inline-block;
+      margin-top: 8px;
+      font-family: var(--font-gta);
+      font-size: 24px;
+      letter-spacing: 2px;
+      color: var(--sa-money-green);
+      text-shadow: 0 0 14px var(--sa-money-glow), 2px 2px 0 #000;
+      text-transform: uppercase;
+    }
+
+    /* GTA San Andreas & GTA 5 Mini HUD (Top Right Floating) */
+    .gta-top-hud {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .sa-stats-box {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      line-height: 1.1;
+    }
+    .sa-cash-counter {
+      font-family: var(--font-gta);
+      font-size: 22px;
+      color: var(--sa-money-green);
+      text-shadow: 0 0 8px var(--sa-money-glow), 1px 1px 0 #000;
+      letter-spacing: 1px;
+    }
+    .gta5-special-bar-container {
+      width: 100px;
+      height: 6px;
+      background: #191b20;
+      border: 1px solid #2b2e38;
+      border-radius: 1px;
+      overflow: hidden;
+      margin-top: 3px;
+    }
+    .gta5-special-bar {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #d88900 0%, var(--gta5-special-yellow) 100%);
+      box-shadow: 0 0 8px var(--gta5-special-yellow);
+      transition: width 0.4s ease;
+    }
+
+    /* GTA San Andreas Wanted Stars */
+    .wanted-level {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 5px 10px;
+      border: 1px solid var(--border-hard);
+      border-radius: var(--radius-sm);
+    }
+    .wanted-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+      margin-right: 4px;
+      text-transform: uppercase;
+    }
+    .wanted-star {
+      font-size: 15px;
+      color: #2b303a;
+      transition: all 0.3s ease;
+      cursor: default;
+      user-select: none;
+    }
+    .wanted-star.active {
+      color: var(--r-yellow);
+      text-shadow: 0 0 10px var(--r-yellow-glow);
+      animation: starFlash 0.8s ease-in-out infinite alternate;
+    }
+    @keyframes starFlash {
+      0% { opacity: 0.6; transform: scale(0.92); }
+      100% { opacity: 1; transform: scale(1.15); }
+    }
+
+    /* GTA 5 Radar / Mini-map Compass (Bottom-Left Corner) */
+    .gta5-radar-hud {
+      position: fixed;
+      bottom: 22px;
+      left: 22px;
+      width: 110px;
+      height: 80px;
+      background: rgba(8, 10, 14, 0.88);
+      border: 2px solid #2e3340;
+      border-radius: 4px;
+      z-index: 990;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 6px 8px;
+    }
+    .radar-grid {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: 
+        radial-gradient(circle at 50% 50%, rgba(248, 171, 29, 0.08) 0%, transparent 60%),
+        linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      background-size: 100% 100%, 14px 14px, 14px 14px;
+      pointer-events: none;
+    }
+    .radar-blip {
+      position: absolute;
+      top: 45%; left: 48%;
+      width: 7px; height: 7px;
+      background: var(--r-yellow);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--r-yellow);
+      animation: radarPulse 1.8s infinite;
+    }
+    @keyframes radarPulse {
+      0% { transform: scale(0.9); opacity: 0.7; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.7; }
+    }
+    .radar-label {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+      z-index: 2;
+    }
+    .radar-bars {
+      display: flex;
+      gap: 3px;
+      z-index: 2;
+      width: 100%;
+    }
+    .radar-bar-health {
+      flex: 1;
+      height: 4px;
+      background: #2cb342;
+      border-radius: 1px;
+      box-shadow: 0 0 6px rgba(44, 179, 66, 0.5);
+    }
+    .radar-bar-armor {
+      flex: 1;
+      height: 4px;
+      background: #3988e3;
+      border-radius: 1px;
+      box-shadow: 0 0 6px rgba(57, 136, 227, 0.5);
+    }
+    .radar-bar-ability {
+      flex: 1;
+      height: 4px;
+      background: var(--gta5-special-yellow);
+      border-radius: 1px;
+      box-shadow: 0 0 6px var(--gta5-special-yellow);
+    }
+
+    /* GTA San Andreas "Wasted / Busted" Style Reset Notification (Silent) */
+    .gta-wasted-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(180, 20, 30, 0.15);
+      backdrop-filter: grayscale(0.8) blur(3px);
+      z-index: 9998;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .gta-wasted-overlay.active {
+      opacity: 1;
+    }
+    .gta-wasted-text {
+      font-family: var(--font-gta);
+      font-size: 110px;
+      letter-spacing: 6px;
+      color: #ff3344;
+      text-shadow: 0 0 40px rgba(255, 51, 68, 0.8), 5px 5px 0 #000;
+      transform: scale(0.9);
+      animation: wastedZoom 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes wastedZoom {
+      0% { transform: scale(0.85); opacity: 0; }
+      50% { transform: scale(1.05); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Top Rockstar Navigation Bar */
+    .r-header {
+      border-bottom: 2px solid var(--border-hard);
+      background: rgba(7, 8, 10, 0.94);
+      backdrop-filter: blur(14px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .r-header-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .r-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+    }
+    .r-emblem {
+      width: 36px;
+      height: 36px;
+      background: var(--r-yellow);
+      color: var(--text-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 20px;
+      transform: skew(-10deg);
+      box-shadow: 0 0 18px var(--r-yellow-glow);
+      border-radius: 2px;
+      letter-spacing: -1px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .r-emblem::after {
+      content: "";
+      position: absolute;
+      top: -50%; left: -50%; width: 200%; height: 200%;
+      background: linear-gradient(60deg, transparent, rgba(255,255,255,0.45), transparent);
+      transform: rotate(30deg) translateY(-100%);
+      animation: emblemShine 4s infinite ease-in-out;
+    }
+    @keyframes emblemShine {
+      0%, 70% { transform: rotate(30deg) translateY(-100%); }
+      100% { transform: rotate(30deg) translateY(100%); }
+    }
+    .r-brand:hover .r-emblem {
+      transform: skew(-10deg) scale(1.08);
+      box-shadow: 0 0 28px var(--r-yellow);
+    }
+    .r-brand-text {
+      display: flex;
+      flex-direction: column;
+    }
+    .r-brand-title {
+      font-family: var(--font-gta);
+      font-size: 19px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-warm-white);
+    }
+    .r-brand-sub {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--r-yellow);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Main Container with High-Z to sit over ambient fog */
+    .wrap {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 36px 20px 80px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Hero Banner with Dramatic Smoke Entrance & Bold Title Effects */
+    .hero-banner {
+      margin-bottom: 34px;
+      position: relative;
+      padding: 42px 40px;
+      background: linear-gradient(135deg, rgba(19, 22, 28, 0.96) 0%, rgba(10, 11, 15, 0.98) 100%);
+      border: 1px solid var(--border-hard);
+      border-left: 6px solid var(--r-yellow);
+      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.75);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      animation: heroSmokeReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    }
+    @keyframes heroSmokeReveal {
+      0% {
+        opacity: 0;
+        transform: translateY(-25px) scale(0.98);
+        filter: blur(12px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+      }
+    }
+    .hero-banner::after {
+      content: "SAN ANDREAS // DISTILGPT-2";
+      position: absolute;
+      right: -20px;
+      bottom: -15px;
+      font-family: var(--font-gta);
+      font-size: 64px;
+      font-weight: 900;
+      color: rgba(255, 255, 255, 0.02);
+      letter-spacing: 6px;
+      pointer-events: none;
+      white-space: nowrap;
+      text-transform: uppercase;
+    }
+
+    .hero-tagline {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--r-yellow);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 14px;
+    }
+
+    /* Bold Dramatic GTA Typography with Metallic Shimmer Effect */
+    .hero-title {
+      font-family: var(--font-gta);
+      font-size: 68px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #ffffff;
+      line-height: 1;
+      margin-bottom: 16px;
+      text-shadow: 
+        0 4px 15px rgba(0, 0, 0, 0.9),
+        0 0 35px rgba(248, 171, 29, 0.25);
+      position: relative;
+      display: inline-block;
+    }
+    .hero-title span {
+      background: linear-gradient(180deg, #ffe07a 0%, var(--r-yellow) 50%, #d4870a 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 25px var(--r-yellow-glow));
+      position: relative;
+    }
+    .hero-desc {
+      color: var(--text-muted);
+      font-size: 15.5px;
+      max-width: 820px;
+      line-height: 1.65;
+    }
+
+    /* Cards with Entrance Stagger */
+    .card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-hard);
+      border-radius: var(--radius-md);
+      padding: 26px 28px;
+      margin-bottom: 26px;
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+      animation: cardFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    }
+    @keyframes cardFadeUp {
+      from { opacity: 0; transform: translateY(20px); filter: blur(6px); }
+      to { opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
+    .card:nth-of-type(1) { animation-delay: 0.15s; }
+    .card:nth-of-type(2) { animation-delay: 0.25s; }
+    .card:nth-of-type(3) { animation-delay: 0.35s; }
+    .card:nth-of-type(4) { animation-delay: 0.45s; }
+
+    .card:hover {
+      border-color: rgba(248, 171, 29, 0.4);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.65), 0 0 25px rgba(248, 171, 29, 0.06);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .card h2 {
+      font-family: var(--font-display);
+      font-size: 21px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-warm-white);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: rgba(248, 171, 29, 0.15);
+      color: var(--r-yellow);
+      border: 1px solid var(--border-accent-subtle);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    /* "What is happening" callout */
+    .what {
+      background: rgba(248, 171, 29, 0.05);
+      border-left: 3px solid var(--r-yellow);
+      border-top: 1px solid rgba(248, 171, 29, 0.12);
+      border-right: 1px solid rgba(248, 171, 29, 0.12);
+      border-bottom: 1px solid rgba(248, 171, 29, 0.12);
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13.5px;
+      margin: 8px 0 18px;
+      color: #d8dce6;
+      line-height: 1.6;
+    }
+    .what strong, .what b {
+      color: var(--r-yellow);
+    }
+
+    /* Inputs */
+    .input-wrapper {
+      position: relative;
+      margin-bottom: 16px;
+    }
+    input[type=text] {
+      width: 100%;
+      background: var(--bg-darker);
+      color: var(--text-warm-white);
+      font-family: var(--font-mono);
+      font-size: 16px;
+      padding: 14px 18px;
+      border: 1px solid var(--border-hard);
+      border-radius: var(--radius-sm);
+      outline: none;
+      transition: all 0.25s ease;
+      letter-spacing: 0.5px;
+    }
+    input[type=text]:focus {
+      border-color: var(--r-yellow);
+      box-shadow: 0 0 20px var(--r-yellow-glow);
+      background: #0b0d11;
+    }
+    input[type=number] {
+      width: 110px;
+      background: var(--bg-darker);
+      color: var(--r-yellow-bright);
+      font-family: var(--font-mono);
+      font-size: 14px;
+      padding: 8px 12px;
+      border: 1px solid var(--border-hard);
+      border-radius: var(--radius-sm);
+      outline: none;
+      transition: all 0.25s ease;
+    }
+    input[type=number]:focus {
+      border-color: var(--r-yellow);
+      box-shadow: 0 0 12px var(--r-yellow-glow);
+    }
+
+    /* Buttons */
+    .sample-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    button {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-hard);
+      background: var(--bg-panel-elevated);
+      color: var(--text-warm-white);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    button:hover:not(:disabled) {
+      border-color: var(--r-yellow);
+      color: var(--r-yellow);
+      background: #1a1e28;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+    }
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    button.sample, button.preset {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: none;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 8px 14px;
+    }
+    button.sample:hover, button.preset:hover {
+      background: var(--r-yellow-faint);
+      border-color: var(--r-yellow);
+      color: var(--r-yellow-bright);
+    }
+
+    /* Main CTA button with Rockstar/GTA Shimmer */
+    button.main {
+      background: var(--r-yellow);
+      color: var(--text-dark);
+      border: 1px solid var(--r-yellow-bright);
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 14px;
+      letter-spacing: 2px;
+      padding: 14px 28px;
+      border-radius: var(--radius-sm);
+      transform: skew(-5deg);
+      box-shadow: 0 4px 22px var(--r-yellow-glow);
+    }
+    button.main > * {
+      transform: skew(5deg);
+    }
+    button.main::before {
+      content: "";
+      position: absolute;
+      top: 0; left: -100%; width: 60%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+      transform: skew(25deg);
+      transition: left 0.7s ease;
+    }
+    button.main:hover:not(:disabled)::before {
+      left: 140%;
+    }
+    button.main:hover:not(:disabled) {
+      background: var(--r-yellow-bright);
+      box-shadow: 0 8px 30px rgba(248, 171, 29, 0.6);
+      color: #000;
+      transform: skew(-5deg) translateY(-2px);
+    }
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      filter: grayscale(0.8);
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    /* Animated Rockstar Computing HUD */
+    .computing-glitch-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--r-yellow);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      background: rgba(248, 171, 29, 0.1);
+      border: 1px solid var(--border-accent-subtle);
+      border-radius: 2px;
+    }
+
+    /* Status & Progress */
+    .status-container {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--border-hard);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .status {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+    .status-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--r-yellow);
+      margin-right: 6px;
+    }
+    .error {
+      color: #ff5566;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      background: rgba(255, 51, 68, 0.08);
+      border: 1px solid rgba(255, 51, 68, 0.25);
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      display: block;
+      margin-top: 10px;
+    }
+
+    /* Tables with Smooth In-View Reveal */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      margin-top: 16px;
+      border: 1px solid var(--border-hard);
+      border-radius: var(--radius-sm);
+      background: var(--bg-darker);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+      font-family: var(--font-mono);
+    }
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-hard);
+      text-align: left;
+    }
+    th {
+      background: var(--bg-panel-elevated);
+      color: var(--text-muted);
+      font-family: var(--font-display);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 11.5px;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    tr {
+      transition: background 0.2s ease;
+    }
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    td.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      color: var(--r-yellow-bright);
+      font-weight: 500;
+    }
+    .tok {
+      font-family: var(--font-mono);
+      background: rgba(248, 171, 29, 0.12);
+      color: var(--r-yellow-bright);
+      border: 1px solid rgba(248, 171, 29, 0.25);
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-size: 12.5px;
+      display: inline-block;
+      transition: all 0.2s ease;
+    }
+    .tok:hover {
+      background: var(--r-yellow);
+      color: #000;
+      transform: scale(1.05);
+      box-shadow: 0 0 10px var(--r-yellow-glow);
+    }
+
+    /* Step Breakdown & Perplexity Highlight */
+    .steps {
+      margin-top: 18px;
+      background: linear-gradient(180deg, #13161d 0%, #0c0d10 100%);
+      border: 1px solid var(--border-hard);
+      border-left: 4px solid var(--r-yellow);
+      border-radius: var(--radius-sm);
+      padding: 20px 22px;
+      line-height: 2;
+      font-size: 14px;
+      position: relative;
+    }
+    .steps b {
+      color: var(--r-yellow);
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+    .result-badge-container {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 14px 0;
+      padding: 14px 20px;
+      background: rgba(248, 171, 29, 0.09);
+      border: 1px solid var(--border-accent-subtle);
+      border-radius: var(--radius-sm);
+      box-shadow: inset 0 0 20px rgba(248, 171, 29, 0.05);
+    }
+    .result-label {
+      font-family: var(--font-display);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .result {
+      font-family: var(--font-gta);
+      font-size: 52px;
+      letter-spacing: 3px;
+      color: var(--r-yellow);
+      text-shadow: 0 0 24px var(--r-yellow-glow), 3px 3px 0 #000;
+      display: inline-block;
+      animation: resultPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes resultPop {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Prediction Bars with Cinematic Animations */
+    .prediction-list {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 36px 150px 1fr 80px;
+      gap: 12px;
+      align-items: center;
+      font-size: 13.5px;
+      padding: 10px 14px;
+      background: var(--bg-darker);
+      border: 1px solid var(--border-hard);
+      border-radius: var(--radius-sm);
+      transition: all 0.25s ease;
+      animation: barRowSlide 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    }
+    @keyframes barRowSlide {
+      from { opacity: 0; transform: translateX(-15px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .bar-row:hover {
+      border-color: rgba(248, 171, 29, 0.5);
+      background: #12151c;
+      transform: translateX(4px);
+    }
+    .bar-rank {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 600;
+    }
+    .bar {
+      height: 14px;
+      background: #181b22;
+      border-radius: 2px;
+      overflow: hidden;
+      border: 1px solid #232834;
+      position: relative;
+    }
+    .fill {
+      height: 100%;
+      background: linear-gradient(90deg, #b87b12 0%, var(--r-yellow) 100%);
+      border-radius: 2px;
+      transition: width 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+      box-shadow: 0 0 10px rgba(248, 171, 29, 0.4);
+      position: relative;
+    }
+    .fill::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+      animation: barGleam 2.5s infinite;
+    }
+    @keyframes barGleam {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    .bar-row.top {
+      border-color: var(--border-accent);
+      background: linear-gradient(90deg, rgba(248, 171, 29, 0.1) 0%, rgba(17, 19, 23, 0.95) 100%);
+      box-shadow: 0 0 16px rgba(248, 171, 29, 0.12);
+    }
+    .bar-row.top .bar-rank {
+      color: var(--r-yellow);
+      font-weight: 700;
+    }
+    .bar-row.top .fill {
+      background: linear-gradient(90deg, var(--r-yellow) 0%, #ffdf75 100%);
+      box-shadow: 0 0 16px var(--r-yellow-glow);
+    }
+    .bar-prob-pct {
+      text-align: right;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--text-warm-white);
+    }
+    .bar-row.top .bar-prob-pct {
+      color: var(--r-yellow);
+      text-shadow: 0 0 10px var(--r-yellow-glow);
+    }
+
+    /* Simulation Section */
+    .sim-tag {
+      display: inline-block;
+      background: rgba(248, 171, 29, 0.12);
+      color: var(--r-yellow);
+      border: 1px solid var(--border-accent-subtle);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 2px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+    .sim-rows-container {
+      margin: 16px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .row-input {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: var(--bg-darker);
+      border: 1px solid var(--border-hard);
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      transition: all 0.25s ease;
+      animation: rowFadeIn 0.35s ease;
+    }
+    @keyframes rowFadeIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .row-input:hover {
+      border-color: rgba(248, 171, 29, 0.35);
+      background: #0f1217;
+    }
+    .row-input input[type=text] {
+      width: 150px;
+      font-size: 14px;
+      padding: 8px 10px;
+      color: var(--r-yellow-bright);
+    }
+    .btn-remove {
+      background: rgba(255, 51, 68, 0.08);
+      border: 1px solid rgba(255, 51, 68, 0.3);
+      color: #ff5566;
+      font-size: 11px;
+      padding: 8px 14px;
+    }
+    .btn-remove:hover:not(:disabled) {
+      background: rgba(255, 51, 68, 0.25);
+      border-color: var(--r-red);
+      color: #fff;
+      box-shadow: 0 0 12px var(--r-red-glow);
+    }
+    .btn-add {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px dashed var(--border-hard);
+      color: var(--text-warm-white);
+      margin-top: 6px;
+    }
+    .btn-add:hover:not(:disabled) {
+      border-color: var(--r-yellow);
+      background: var(--r-yellow-faint);
+    }
+
+    /* Footer styling */
+    .r-footer {
+      border-top: 1px solid var(--border-hard);
+      padding: 34px 0 20px;
+      margin-top: 40px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 680px) {
+      .hero-title {
+        font-size: 44px;
+      }
+      .hero-banner {
+        padding: 26px 20px;
+      }
+      .card {
+        padding: 18px 16px;
+      }
+      .bar-row {
+        grid-template-columns: 24px 100px 1fr 50px;
+        font-size: 12px;
+        gap: 8px;
+        padding: 8px 10px;
+      }
+      .row-input {
+        flex-wrap: wrap;
+      }
+      .row-input input[type=text] {
+        width: 100%;
+      }
+      .gta-top-hud {
+        display: none;
+      }
+      .gta5-radar-hud {
+        display: none;
+      }
+      .gta-splash-title {
+        font-size: 42px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Entry Fog Curtain (Initial Page Load Transition) -->
+  <div class="entry-fog-curtain"></div>
+
+  <!-- Dynamic Ambient Smoke & Fog Simulation (Hardware Accelerated Canvas, 100% Silent) -->
+  <canvas id="fogCanvas"></canvas>
+
+  <!-- Cinematic Visual Overlays -->
+  <div class="crt-scanlines"></div>
+  <div class="cinematic-vignette"></div>
+
+  <!-- GTA San Andreas / GTA 5 Style Mission Passed Splash (Silent) -->
+  <div id="gtaSplash" class="gta-mission-splash">
+    <div class="gta-splash-bar"></div>
+    <div class="gta-splash-title" id="gtaSplashTitle">MISSION PASSED!</div>
+    <div class="gta-splash-sub" id="gtaSplashSub">DISTILGPT-2 EVALUATION COMPLETE</div>
+    <div class="gta-respect-badge" id="gtaRespectBadge">RESPECT +</div>
+    <div class="gta-splash-bar"></div>
+  </div>
+
+  <!-- GTA San Andreas Busted / Wasted Overlay (Silent) -->
+  <div id="wastedOverlay" class="gta-wasted-overlay">
+    <div class="gta-wasted-text" id="wastedText">BUSTED</div>
+  </div>
+
+  <!-- GTA 5 Radar / Mini-Map (Bottom Left HUD) -->
+  <div class="gta5-radar-hud" title="GTA 5 Satellite Telemetry">
+    <div class="radar-grid"></div>
+    <div class="radar-blip"></div>
+    <div class="radar-label" id="radarCoord">DISTILGPT-2 // LS</div>
+    <div class="radar-bars">
+      <div class="radar-bar-health" title="System Integrity"></div>
+      <div class="radar-bar-armor" title="Model Weights Loaded"></div>
+      <div class="radar-bar-ability" id="radarSpecialBar" title="GPU/NPU Compute Reserve"></div>
+    </div>
+  </div>
+
+  <!-- Rockstar-inspired Top Bar -->
+  <header class="r-header">
+    <div class="r-header-inner">
+      <div class="r-brand" id="brandLogo">
+        <div class="r-emblem">P</div>
+        <div class="r-brand-text">
+          <span class="r-brand-title">Perplexity Explorer</span>
+          <span class="r-brand-sub">San Andreas Intelligence Lab</span>
+        </div>
+      </div>
+
+      <!-- GTA San Andreas & GTA 5 HUD Elements -->
+      <div class="gta-top-hud">
+        <!-- San Andreas Cash / Token Counter -->
+        <div class="sa-stats-box">
+          <div class="sa-cash-counter" id="saCashDisplay">$00000350</div>
+          <div class="gta5-special-bar-container" title="Franklin / Michael Special Ability Meter">
+            <div class="gta5-special-bar" id="gta5SpecialMeter"></div>
+          </div>
+        </div>
+
+        <!-- GTA Wanted Level HUD Animation -->
+        <div class="wanted-level" title="DistilGPT-2 Activity Level">
+          <span class="wanted-label">WANTED</span>
+          <span class="wanted-star" id="star1">★</span>
+          <span class="wanted-star" id="star2">★</span>
+          <span class="wanted-star" id="star3">★</span>
+          <span class="wanted-star" id="star4">★</span>
+          <span class="wanted-star" id="star5">★</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Hero / Intro with Bold Typography & Smoke Effects -->
+    <section class="hero-banner">
+      <div class="hero-tagline">
+        <span class="computing-glitch-badge">SYS:ONLINE</span>
+        <span>Deep Learning Probability Matrix</span>
+      </div>
+      <h1 class="hero-title">Measure Sentence <span>Surprise</span></h1>
+      <p class="hero-desc">
+        Explore how an authentic transformer model (DistilGPT-2) evaluates human text. Unpack sequential token probabilities, mathematical perplexity metrics, and real-time next-token distribution.
+      </p>
+    </section>
+
+    <!-- Section 1: Enter a Sentence -->
+    <section class="card" aria-label="Sentence Input Module">
+      <div class="card-header">
+        <h2><span class="section-num">01</span> Type a sentence</h2>
+      </div>
+      <div class="what">
+        <strong>How it works:</strong> The model evaluates your sentence sequentially token by token. At every token step, it calculates: <em>"Given all previous tokens, what is the exact probability of this next token appearing?"</em>
+      </div>
+
+      <div class="input-wrapper">
+        <input type="text" id="sentence" value="I love Python" placeholder="Enter custom sentence..." autocomplete="off" spellcheck="false">
+      </div>
+
+      <div class="sample-container">
+        <button type="button" class="sample">I love Python</button>
+        <button type="button" class="sample">Python love I</button>
+        <button type="button" class="sample">The capital of France is Paris</button>
+      </div>
+
+      <button type="button" class="main" id="runBtn">
+        <span>Calculate Perplexity</span>
+      </button>
+
+      <div class="status-container">
+        <span class="status-indicator"></span>
+        <div class="status" id="status">The model downloads the first time you click (one time only).</div>
+      </div>
+    </section>
+
+    <!-- Section 2: Token Probability & Perplexity -->
+    <section class="card" id="realCard" style="display:none" aria-label="Token Probability Results">
+      <div class="card-header">
+        <h2><span class="section-num">02</span> Probability of each token &rarr; Perplexity</h2>
+      </div>
+      <div class="what">
+        <strong>The Math:</strong> Perplexity = <b>(1/P₁ × 1/P₂ × … × 1/Pₙ)<sup>1/N</sup></b>. A low probability yields a high inverse <b>1/P</b>, driving perplexity upwards. Lower perplexity means the model found the text natural and unsurprising.
+      </div>
+      <div id="realOut"></div>
+    </section>
+
+    <!-- Section 3: Next Token Prediction -->
+    <section class="card" id="nextCard" style="display:none" aria-label="Next Token Prediction">
+      <div class="card-header">
+        <h2><span class="section-num">03</span> What does the model predict next?</h2>
+      </div>
+      <div class="what">
+        The top 8 tokens DistilGPT-2 predicts could appear immediately after your sentence, along with their calibrated likelihood distribution.
+      </div>
+      <div class="prediction-list" id="nextOut"></div>
+    </section>
+
+    <!-- Section 4: Simulated Experiment -->
+    <section class="card" aria-label="Simulated Probability Lab">
+      <div class="card-header">
+        <h2>
+          <span class="section-num">04</span> Try it by hand
+          <span class="sim-tag">Simulated, not from the model</span>
+        </h2>
+      </div>
+      <div class="what">
+        Adjust probabilities manually and observe mathematical perplexity response in real time. Try <strong>"All 1/8"</strong>: if every token has probability 0.125, perplexity is exactly 8.
+      </div>
+
+      <div class="sample-container">
+        <button type="button" class="preset" data-p="I:0.5,love:0.8,Python:0.2">I love Python (0.5, 0.8, 0.2)</button>
+        <button type="button" class="preset" data-p="t1:0.125,t2:0.125,t3:0.125,t4:0.125,t5:0.125,t6:0.125,t7:0.125,t8:0.125">All 1/8</button>
+        <button type="button" class="preset" data-p="The:0.9,cat:0.9,sat:0.9,quietly:0.01">One surprising word</button>
+      </div>
+
+      <div id="simRows" class="sim-rows-container"></div>
+      <button type="button" id="addRow" class="btn-add">+ Add Token</button>
+
+      <div id="simOut"></div>
+    </section>
+
+    <footer class="r-footer">
+      Perplexity Explorer // Built with DistilGPT-2 & Transformers.js // Cinematic Rockstar Lab UI
+    </footer>
+  </main>
+
+  <!-- Ambient Smoke & Fog Particle Simulation Engine (Silent) -->
+  <script>
+    (function initFogSimulation() {
+      const canvas = document.getElementById('fogCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let width, height;
+
+      function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      // Atmospheric smoke particles
+      const particleCount = 28;
+      const particles = [];
+
+      class SmokeParticle {
+        constructor(isInitial = false) {
+          this.reset(isInitial);
+        }
+        reset(isInitial = false) {
+          this.x = Math.random() * width;
+          this.y = isInitial ? Math.random() * height : height + 50;
+          this.radius = 120 + Math.random() * 220;
+          this.vx = (Math.random() - 0.5) * 0.45;
+          this.vy = -(0.35 + Math.random() * 0.55);
+          this.alpha = 0.01 + Math.random() * 0.045;
+          this.maxAlpha = this.alpha;
+          this.growth = 0.15 + Math.random() * 0.25;
+          this.colorHue = Math.random() > 0.8 ? '38, 170, 248' : '248, 171, 29';
+        }
+        update() {
+          this.x += this.vx;
+          this.y += this.vy;
+          this.radius += this.growth;
+          if (this.y < height * 0.1) {
+            this.alpha *= 0.985;
+          }
+          if (this.y < -this.radius || this.alpha < 0.002) {
+            this.reset(false);
+          }
+        }
+        draw() {
+          const grad = ctx.createRadialGradient(
+            this.x, this.y, 0,
+            this.x, this.y, this.radius
+          );
+          grad.addColorStop(0, `rgba(${this.colorHue}, ${this.alpha})`);
+          grad.addColorStop(0.5, `rgba(${this.colorHue}, ${this.alpha * 0.45})`);
+          grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(new SmokeParticle(true));
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, width, height);
+        for (let i = 0; i < particles.length; i++) {
+          particles[i].update();
+          particles[i].draw();
+        }
+        requestAnimationFrame(animate);
+      }
+      requestAnimationFrame(animate);
+    })();
+  </script>
+
+  <!-- Transformers.js Model & Application Logic -->
+  <script type="module">
+    import { AutoTokenizer, AutoModelForCausalLM, Tensor } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3";
+
+    const MODEL_ID = "Xenova/distilgpt2";
+    const START_TOKEN_ID = 50256; // GPT-2's <|endoftext|> token, used as the start marker
+    let tokenizer = null;
+    let model = null;
+    let userCash = 350;
+
+    const $ = (id) => document.getElementById(id);
+
+    // Number formatting helper
+    function fmt(x) {
+      if (x === 0) return "0";
+      if (x >= 0.001 && x < 1e6) return Number(x.toPrecision(4)).toString();
+      return x.toExponential(2);
+    }
+
+    // Token visual representation
+    function showToken(t) {
+      return t.replace(/ /g, "␣").replace(/\n/g, "↵");
+    }
+
+    // GTA San Andreas Cash Animation
+    function addCash(amount) {
+      userCash += amount;
+      const display = $('saCashDisplay');
+      if (display) {
+        display.textContent = '$' + String(userCash).padStart(8, '0');
+        display.style.transform = 'scale(1.2)';
+        display.style.color = '#fff';
+        setTimeout(() => {
+          display.style.transform = 'scale(1)';
+          display.style.color = 'var(--sa-money-green)';
+        }, 300);
+      }
+    }
+
+    // GTA Wanted Stars Animation Control (Silent HUD effect)
+    function setWantedStars(count) {
+      const stars = [$('star1'), $('star2'), $('star3'), $('star4'), $('star5')];
+      stars.forEach((s, idx) => {
+        if (!s) return;
+        if (idx < count) {
+          s.classList.add('active');
+        } else {
+          s.classList.remove('active');
+        }
+      });
+      // Also adjust GTA 5 special ability bar
+      const specialMeter = $('gta5SpecialMeter');
+      if (specialMeter) {
+        specialMeter.style.width = count === 5 ? '100%' : (count * 20 + 10) + '%';
+      }
+    }
+
+    // GTA Mission Banner Trigger (Silent Visual Splash)
+    let splashTimeout = null;
+    function triggerGtaSplash(title, subtitle, respectText = "RESPECT +") {
+      const splash = $('gtaSplash');
+      if (!splash) return;
+      $('gtaSplashTitle').textContent = title || "MISSION PASSED!";
+      $('gtaSplashSub').textContent = subtitle || "DISTILGPT-2 EVALUATION COMPLETE";
+      $('gtaRespectBadge').textContent = respectText;
+      splash.classList.add('active');
+      clearTimeout(splashTimeout);
+      splashTimeout = setTimeout(() => {
+        splash.classList.remove('active');
+      }, 2400);
+    }
+
+    // Perplexity explanation renderer (used by both Section 2 and Section 4)
+    function explain(rows) {
+      const N = rows.length;
+      let sumLog = 0; // sum of ln(1/P); avoids numeric overflow for longer sequences
+      let html = `<div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 48px;">#</th>
+              <th>Token</th>
+              <th style="text-align: right;">Probability P</th>
+              <th style="text-align: right;">1 / P</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+      rows.forEach((r, i) => {
+        sumLog += -Math.log(r.p);
+        html += `<tr style="animation: barRowSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards ${i * 0.05}s">
+          <td style="color: var(--text-dim);">${i + 1}</td>
+          <td><span class="tok">${showToken(r.token)}</span></td>
+          <td class="num">${fmt(r.p)}</td>
+          <td class="num">${fmt(1 / r.p)}</td>
+        </tr>`;
+      });
+
+      html += `</tbody></table></div>`;
+
+      const product = Math.exp(sumLog);
+      const pp = Math.exp(sumLog / N);
+      const shown = rows.slice(0, 10).map(r => fmt(1 / r.p)).join(" × ") + (N > 10 ? " × …" : "");
+
+      html += `<div class="steps">
+        <div><b>Step 1:</b> Multiply all the 1/P values: <span>${shown}</span> = <b>${fmt(product)}</b></div>
+        <div><b>Step 2:</b> Count the tokens: N = <b>${N}</b></div>
+        <div><b>Step 3:</b> Take the N-th root: (${fmt(product)})<sup>1/${N}</sup></div>
+        <div class="result-badge-container">
+          <div class="result-label">Calculated Perplexity:</div>
+          <div class="result">${fmt(pp)}</div>
+        </div>
+        <div style="color: var(--text-muted); font-size: 13px;">
+          Perplexity ≈ <b>${fmt(pp)}</b>: on average the model was as unsure as choosing between about <b>${fmt(pp)}</b> equally likely tokens.
+        </div>
+      </div>`;
+
+      return html;
+    }
+
+    // Load DistilGPT-2 model with real download progress percentage
+    async function loadModel() {
+      if (model) return;
+      setWantedStars(2);
+      $("status").textContent = "Downloading the model… (first time only)";
+      tokenizer = await AutoTokenizer.from_pretrained(MODEL_ID);
+      model = await AutoModelForCausalLM.from_pretrained(MODEL_ID, {
+        dtype: "q8",
+        progress_callback: (e) => {
+          if (e.status === "progress" && e.file && e.file.endsWith(".onnx")) {
+            const pct = Math.round(e.progress);
+            $("status").textContent = `Downloading the model… ${pct}%`;
+            if (pct > 20) setWantedStars(3);
+            if (pct > 70) setWantedStars(4);
+          }
+        },
+      });
+      setWantedStars(1);
+    }
+
+    // Softmax calculation across vocabulary logits
+    function logSoftmaxRow(data, offset, V) {
+      let max = -Infinity;
+      for (let j = 0; j < V; j++) {
+        if (data[offset + j] > max) max = data[offset + j];
+      }
+      let sum = 0;
+      for (let j = 0; j < V; j++) {
+        sum += Math.exp(data[offset + j] - max);
+      }
+      const logZ = max + Math.log(sum);
+      return (id) => data[offset + id] - logZ;
+    }
+
+    // Execution routine
+    async function run() {
+      const text = $("sentence").value;
+      if (!text.trim()) return;
+
+      $("runBtn").disabled = true;
+      setWantedStars(5);
+
+      try {
+        await loadModel();
+        $("status").textContent = "Model ready. Calculating…";
+
+        const ids = [START_TOKEN_ID, ...tokenizer.encode(text)];
+        const n = ids.length;
+        const input_ids = new Tensor("int64", BigInt64Array.from(ids.map(BigInt)), [1, n]);
+        const attention_mask = new Tensor("int64", new BigInt64Array(n).fill(1n), [1, n]);
+
+        const { logits } = await model({ input_ids, attention_mask });
+        const V = logits.dims[2];
+        const data = logits.data;
+
+        // P(token i | tokens before it) for every real token of the sentence
+        const rows = [];
+        for (let i = 1; i < n; i++) {
+          const logP = logSoftmaxRow(data, (i - 1) * V, V);
+          rows.push({ token: tokenizer.decode([ids[i]]), p: Math.exp(logP(ids[i])) });
+        }
+
+        $("realOut").innerHTML = `
+          <p style="color: var(--text-muted); font-size: 13.5px; margin-bottom: 8px;">
+            The first token is predicted from the model's start marker, so every token gets an authentic probability.
+          </p>` + explain(rows);
+        $("realCard").style.display = "block";
+
+        // Top 8 next tokens after the whole sentence
+        const lastLogP = logSoftmaxRow(data, (n - 1) * V, V);
+        const probs = [];
+        for (let j = 0; j < V; j++) {
+          probs.push([j, Math.exp(lastLogP(j))]);
+        }
+        probs.sort((a, b) => b[1] - a[1]);
+        const top = probs.slice(0, 8);
+        const maxP = top[0][1];
+
+        $("nextOut").innerHTML = top.map(([id, p], k) => `
+          <div class="bar-row ${k === 0 ? "top" : ""}" style="animation-delay: ${k * 0.06}s">
+            <span class="bar-rank">#${k + 1}</span>
+            <span><span class="tok">${showToken(tokenizer.decode([id]))}</span></span>
+            <div class="bar">
+              <div class="fill" style="width:${(p / maxP) * 100}%"></div>
+            </div>
+            <span class="bar-prob-pct">${(p * 100).toFixed(1)}%</span>
+          </div>`).join("");
+        $("nextCard").style.display = "block";
+
+        $("status").textContent = "Model ready ✓";
+
+        // Reward player with GTA cash and Mission Passed animation
+        addCash(250);
+        triggerGtaSplash("MISSION PASSED!", `+250 CASH // ${rows.length} TOKENS ANALYZED`, "RESPECT +");
+        setTimeout(() => setWantedStars(1), 1500);
+
+      } catch (err) {
+        $("status").innerHTML = `<span class="error">Could not run the model: ${err.message}. Check your internet connection and that you opened the page through a local server (http://localhost…). Section 4 still works without the model.</span>`;
+        console.error(err);
+        setWantedStars(0);
+      }
+      $("runBtn").disabled = false;
+    }
+
+    $("runBtn").onclick = run;
+    document.querySelectorAll(".sample").forEach(b => {
+      b.onclick = () => {
+        $("sentence").value = b.textContent;
+        run();
+      };
+    });
+
+    // Enter key triggers calculation
+    $("sentence").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !$("runBtn").disabled) {
+        run();
+      }
+    });
+
+    // ---------- Section 4: Simulated Experiment ----------
+    function addRow(token = "", p = 0.5) {
+      const div = document.createElement("div");
+      div.className = "row-input";
+      div.innerHTML = `
+        <input type="text" value="${token}" placeholder="token" spellcheck="false">
+        <input type="number" min="0.0001" max="1" step="0.01" value="${p}">
+        <button type="button" class="btn-remove">Remove</button>`;
+      
+      div.querySelector(".btn-remove").onclick = () => {
+        div.style.opacity = '0';
+        div.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+          div.remove();
+          updateSim();
+        }, 150);
+      };
+      div.querySelectorAll("input").forEach(inp => inp.oninput = updateSim);
+      $("simRows").appendChild(div);
+    }
+
+    function updateSim() {
+      const rows = [...document.querySelectorAll("#simRows .row-input")].map(d => {
+        const [t, p] = d.querySelectorAll("input");
+        return { token: t.value || "?", p: parseFloat(p.value) };
+      });
+      if (rows.length === 0) {
+        $("simOut").innerHTML = "";
+        return;
+      }
+      if (rows.some(r => !(r.p > 0 && r.p <= 1))) {
+        $("simOut").innerHTML = `<div class="error">Each probability must be more than 0 and at most 1.</div>`;
+        return;
+      }
+      $("simOut").innerHTML = explain(rows);
+    }
+
+    function loadPreset(str) {
+      $("simRows").innerHTML = "";
+      str.split(",").forEach(pair => {
+        const [t, p] = pair.split(":");
+        addRow(t, parseFloat(p));
+      });
+      updateSim();
+    }
+
+    document.querySelectorAll(".preset").forEach(b => {
+      b.onclick = () => {
+        loadPreset(b.dataset.p);
+        setWantedStars(2);
+        addCash(50);
+        setTimeout(() => setWantedStars(1), 700);
+      };
+    });
+
+    $("addRow").onclick = () => {
+      addRow("new", 0.5);
+      updateSim();
+    };
+
+    // Initialize with default preset
+    loadPreset("I:0.5,love:0.8,Python:0.2");
+  </script>
+</body>
+</html>
